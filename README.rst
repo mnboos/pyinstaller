@@ -59,7 +59,7 @@ Requirements and Tested Platforms
 - Python: 
 
  - 2.7 or 3.4-3.7
- - pyaes (only if using bytecode encryption)
+ - pycryptodome (only if using bytecode encryption)
 
 - Windows (32bit/64bit):
 
