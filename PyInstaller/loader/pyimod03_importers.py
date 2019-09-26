@@ -326,7 +326,12 @@ class FrozenImporter(object):
             # Module not in sys.modules - load it and it to sys.modules.
             if module is None:
                 # Load code object from the bundled ZIP archive.
-                is_pkg, bytecode = self._pyz_archive.extract(entry_name)
+                print("<<<< extract module for load: ", entry_name)
+                try:
+                    is_pkg, bytecode = self._pyz_archive.extract(entry_name)
+                except:
+                    print("Extraction failed: ", entry_name)
+                    return
                 # Create new empty 'module' object.
                 module = imp_new_module(fullname)
 
@@ -435,7 +440,11 @@ class FrozenImporter(object):
             # extract() returns None if fullname not in the archive, thus the
             # next line will raise an execpion which will be catched just
             # below and raise the ImportError.
-            return self._pyz_archive.extract(fullname)[1]
+            extracted = self._pyz_archive.extract(fullname)
+            if extracted:
+                return extracted[1]
+            else:
+                return None
         except:
             raise ImportError('Loader FrozenImporter cannot handle module ' + fullname)
 
@@ -624,6 +633,7 @@ class FrozenImporter(object):
             # Set __path__ to point to 'sys.prefix/package/subpackage'.
             module.__path__ = [pyi_os_path.os_path_dirname(module.__file__)]
 
+        print("<<< exec module: ", module, dir(module))
         exec(bytecode, module.__dict__)
 
 

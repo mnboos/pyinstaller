@@ -278,7 +278,12 @@ def checkCache(fnm, strip=False, upx=False, dist_nm=None):
     # with copying st_flags. Issue #1650.
     # 'shutil.copy' copies also permission bits and it should be sufficient for
     # PyInstalle purposes.
-    shutil.copy(fnm, cachedfile)
+    if os.path.isdir(fnm):
+        if os.path.isdir(cachedfile):
+            shutil.rmtree(cachedfile, ignore_errors=True)
+        shutil.copytree(fnm, cachedfile)
+    else:
+        shutil.copy(fnm, cachedfile)
     # TODO find out if this is still necessary when no longer using shutil.copy2()
     if hasattr(os, 'chflags'):
         # Some libraries on FreeBSD have immunable flag (libthr.so.3, for example)
@@ -360,9 +365,13 @@ def checkCache(fnm, strip=False, upx=False, dist_nm=None):
 
 def cacheDigest(fnm, redirects):
     hasher = hashlib.md5()
-    with open(fnm, "rb") as f:
-        for chunk in iter(lambda: f.read(16 * 1024), b""):
-            hasher.update(chunk)
+    if os.path.isdir(fnm):
+        # todo: how to reasonably handle this?
+        pass
+    else:
+        with open(fnm, "rb") as f:
+            for chunk in iter(lambda: f.read(16 * 1024), b""):
+                hasher.update(chunk)
     if redirects:
         redirects = str(redirects)
         if is_py3:

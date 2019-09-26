@@ -211,10 +211,13 @@ class ZlibArchiveWriter(ArchiveWriter):
         obj = zlib.compress(data, self.COMPRESSION_LEVEL)
 
         # First compress then encrypt.
-        if self.cipher:
+        # todo: figure out how to get usercode and encrypt it
+        encrypted = name == "hello_world_foobar"
+        if encrypted and self.cipher:
+            print("Encrypting: ", entry)
             obj = self.cipher.encrypt(obj)
 
-        self.toc.append((name, (typ, self.lib.tell(), len(obj))))
+        self.toc.append((name, (typ, self.lib.tell(), len(obj), encrypted)))
         self.lib.write(obj)
 
     def update_headers(self, tocpos):

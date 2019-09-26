@@ -225,9 +225,26 @@ class Analysis(Target):
                                   'key = %r\n' % cipher.key))
 
             logger.info('Adding dependencies on pyi_crypto.py module')
-            pyaes_path = os.path.join(CONF['workpath'], 'pyimod00_pyaes.py')
-            import pyaes.aes
-            shutil.copy(pyaes.aes.__file__, pyaes_path)
+            import Crypto
+            import platform
+            import ctypes
+            crypto_path = os.path.join(CONF['workpath'], "Crypto")
+
+            # todo: fix this path, it's still hardcoded
+            ctypes_path = os.path.join(CONF['distpath'], "hello_world", "ctypes")
+            if os.path.isdir(crypto_path):
+                shutil.rmtree(crypto_path, ignore_errors=True)
+            if os.path.isdir(ctypes_path):
+                shutil.rmtree(ctypes_path, ignore_errors=True)
+
+            print("copy ctypes: ", os.path.dirname(ctypes.__file__), ctypes_path)
+
+            shutil.copytree(os.path.dirname(Crypto.__file__), crypto_path)
+
+            # todo: why does this copytree not work?
+            shutil.copytree(os.path.dirname(ctypes.__file__), ctypes_path)
+            shutil.copy2(os.__file__, os.path.join(CONF['workpath'], "os.py"))
+            shutil.copy2(platform.__file__, os.path.join(CONF['workpath'], "platform.py"))
 
         self.excludes = excludes or []
         self.scripts = TOC()

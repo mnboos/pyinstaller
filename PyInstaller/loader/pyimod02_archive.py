@@ -251,9 +251,9 @@ class Cipher(object):
         # the generated 'pyi_crypto_key' module.
         import pyimod00_crypto_key
         key = pyimod00_crypto_key.key
-        import pyimod00_pyaes
+        from Crypto.Cipher import AES
 
-        self._aes = pyimod00_pyaes
+        self._aes = AES
         assert type(key) is str
         if len(key) > CRYPT_BLOCK_SIZE:
             self.key = key[0:CRYPT_BLOCK_SIZE]
@@ -265,7 +265,7 @@ class Cipher(object):
         # The 'AESModeOfOperationCFB' class is stateful, this factory method
         # is used to re-initialize the block cipher class with each call to
         # encrypt() and decrypt().
-        return self._aes.AESModeOfOperationCFB(self.key.encode(), iv=iv)
+        return self._aes.new(self.key.encode(), self._aes.MODE_CFB, iv=iv)
 
     def decrypt(self, data):
         return self.__create_cipher(data[:CRYPT_BLOCK_SIZE]).decrypt(data[CRYPT_BLOCK_SIZE:])
@@ -304,26 +304,29 @@ class ZlibArchiveReader(ArchiveReader):
 
         super(ZlibArchiveReader, self).__init__(path, offset)
 
-        try:
-            self.cipher = Cipher()
-        except ImportError:
-            self.cipher = None
+        self.cipher = None
 
     def is_package(self, name):
-        (typ, pos, length) = self.toc.get(name, (0, None, 0))
+        (typ, pos, length, encrypted) = self.toc.get(name, (0, None, 0, False))
         if pos is None:
             return None
         return typ == PYZ_TYPE_PKG
 
     def extract(self, name):
-        (typ, pos, length) = self.toc.get(name, (0, None, 0))
+        (typ, pos, length, encrypted) = self.toc.get(name, (0, None, 0, False))
         if pos is None:
             return None
         with self.lib:
             self.lib.seek(self.start + pos)
             obj = self.lib.read(length)
+
+        if encrypted and not self.cipher:
+            print("!!! Creating cipher")
+            self.cipher = Cipher()
+            print("cipher created: ", self.cipher)
         try:
-            if self.cipher:
+            if encrypted and self.cipher:
+                print("<<< decrypting: ", name)
                 obj = self.cipher.decrypt(obj)
             obj = zlib.decompress(obj)
             if typ in (PYZ_TYPE_MODULE, PYZ_TYPE_PKG):

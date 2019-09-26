@@ -375,14 +375,14 @@ def main(scripts, name=None, onefile=None,
     scripts = list(map(Path, scripts))
 
     if key:
-        # Tries to import pyaes since we need it for bytecode obfuscation.
+        # Tries to import Crypto since we need it for bytecode obfuscation.
         try:
-            import pyaes  # noqa: F401
+            import Crypto  # noqa: F401
         except ImportError:
-            logger.error('We need pyaes to use byte-code obfuscation but ')
+            logger.error('We need pycryptodome to use byte-code obfuscation but ')
             logger.error('we could not find it. ')
             logger.error('You can install it with pip by running:')
-            logger.error('  pip install pyaes')
+            logger.error('  pip install pycryptodome')
             sys.exit(1)
         cipher_init = cipher_init_template % {'key': key}
     else:
